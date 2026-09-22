@@ -61,7 +61,6 @@ PRIZE_LADDER = [
     16000, 32000, 64000, 125000, 250000, 500000, 1000000,
 ]
 
-# מאגר השאלות של "יסודות הניהול" כולל הסברים מפורטים
 ALL_QUESTIONS = [
     {
         "question": "כיצד מוגדרת 'סמכות' בחומר הנלמד?", 
@@ -240,7 +239,6 @@ ALL_QUESTIONS = [
     }
 ]
 
-# ניהול מצב המשחק
 if "game_state" not in st.session_state:
     st.session_state.game_state = "start"
     st.session_state.selected_questions = []
@@ -251,6 +249,8 @@ if "game_state" not in st.session_state:
     st.session_state.show_explanation = False
     st.session_state.is_correct = False
     st.session_state.history = []
+    st.session_state.start_time = None
+    st.session_state.end_time = None
 
 def reset_game():
     st.session_state.game_state = "playing"
@@ -262,6 +262,8 @@ def reset_game():
     st.session_state.show_explanation = False
     st.session_state.is_correct = False
     st.session_state.history = []
+    st.session_state.start_time = time.time()
+    st.session_state.end_time = None
 
 col_title, col_icon = st.columns([8, 1])
 with col_title:
@@ -269,10 +271,10 @@ with col_title:
 st.markdown("---")
 
 if st.session_state.game_state == "start":
-    st.subheader("ברוכים הבאים למשחק הטריוויה האישי שלך (יסודות הניהול)!")
-    st.write("ענו נכון על 15 שאלות. לאחר כל בחירה יופיע הסבר לימודי לחומר.")
+    st.subheader("ברוכים הבאים לאתגר הזמנים (יסודות הניהול)!")
+    st.write("ענו נכון על 15 שאלות מהר ככל האפשר. הטיימר מתחיל לרוץ מיד עם הלחיצה!")
     st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("התחל במשחק", type="primary", use_container_width=True):
+    if st.button("התחל במשחק והפעל שעון", type="primary", use_container_width=True):
         reset_game()
         st.rerun()
 
@@ -280,7 +282,6 @@ elif st.session_state.game_state == "playing":
     q_idx = st.session_state.current_question
     current_q = st.session_state.selected_questions[q_idx]
 
-    # ארגון התשובות באופן רנדומלי לשאלה הנוכחית
     if "shuffled_options" not in st.session_state or st.session_state.get("current_q_idx") != q_idx:
         opts_with_idx = list(enumerate(current_q["options"]))
         random.shuffle(opts_with_idx)
@@ -290,15 +291,13 @@ elif st.session_state.game_state == "playing":
 
     correct_answer_idx = st.session_state.correct_idx
     options_list = st.session_state.shuffled_options
-
     current_prize = PRIZE_LADDER[q_idx - 1] if q_idx > 0 else 0
 
-    # אם אנחנו במסך ההסבר שאחרי הבחירה
     if st.session_state.show_explanation:
         st.markdown(f"### שאלה {q_idx + 1}: {current_q['question']}")
         
         if st.session_state.is_correct:
-            st.balloons()  # חגיגת בלונים/קונפטי לתשובה נכונה
+            st.balloons()  
             st.success("🎉 תשובה נכונה!")
         else:
             st.error("❌ טעות בתשובה!")
@@ -306,8 +305,7 @@ elif st.session_state.game_state == "playing":
         
         st.info(f"💡 **הסבר לחומר:** {current_q['explanation']}")
         
-        # כפתור המשך או סיום בהתאם לתוצאה
-        btn_text = "המשך לשאלה הבאה" if st.session_state.is_correct and q_idx < 14 else "סיום וסיכום המשחק"
+        btn_text = "המשך לשאלה הבאה" if st.session_state.is_correct and q_idx < 14 else "לצפייה בתוצאת הזמן והסיכום"
         if st.button(btn_text, type="primary", use_container_width=True):
             st.session_state.show_explanation = False
             if not st.session_state.is_correct:
@@ -320,7 +318,6 @@ elif st.session_state.game_state == "playing":
                 st.session_state.hint_message = ""
             st.rerun()
 
-    # אם אנחנו במסך בחירת התשובה (משחק רגיל)
     else:
         col_l1, col_l2, col_l3, col_info = st.columns([1.2, 1.2, 1.2, 2.5])
         
@@ -342,7 +339,7 @@ elif st.session_state.game_state == "playing":
                     st.session_state.lifelines["audience"] = False
                     st.rerun()
             else:
-                st.button("👥 עזרת קהל (נוצל)", disabled=True, use_container_width=True)
+                st.button("👥 קהל (נוצל)", disabled=True, use_container_width=True)
 
         with col_l3:
             if st.session_state.lifelines["phone"]:
@@ -374,7 +371,11 @@ elif st.session_state.game_state == "playing":
                 else:
                     if st.button(f"{letters[i]}. {option}", key=f"opt_{i}", use_container_width=True):
                         st.session_state.is_correct = (i == correct_answer_idx)
-                        # שמירת השאלה לסיכום הסופי
+                        
+                        # עצירת שעון אם ענה טעות או שזו השאלה האחרונה
+                        if not st.session_state.is_correct or q_idx == 14:
+                            st.session_state.end_time = time.time()
+                            
                         st.session_state.history.append({
                             "question": current_q['question'],
                             "user_ans": option,
@@ -385,7 +386,6 @@ elif st.session_state.game_state == "playing":
                         st.session_state.show_explanation = True
                         st.rerun()
 
-    # סרגל הצד מוצג כל הזמן במהלך המשחק
     with st.sidebar:
         st.subheader("🏆 סולם הזכיות")
         for idx in range(len(PRIZE_LADDER) - 1, -1, -1):
@@ -404,6 +404,13 @@ elif st.session_state.game_state in ["won", "lost"]:
         q_idx = st.session_state.current_question
         final_prize = 32000 if q_idx >= 10 else 1000 if q_idx >= 5 else 0
         st.error(f"הפסדת את המשחק, אך סיימת עם סכום זכייה של: **{final_prize:,} ₪**")
+    
+    # חישוב והצגת הזמן הכולל
+    if st.session_state.start_time and st.session_state.end_time:
+        total_sec = int(st.session_state.end_time - st.session_state.start_time)
+        mins = total_sec // 60
+        secs = total_sec % 60
+        st.warning(f"⏱️ **זמן המשחק שלך: {mins} דקות ו-{secs} שניות!** צלם מסך ושלח לקבוצה כדי להשוויץ בתוצאה.")
     
     if st.button("שחק שוב - משחק חדש", type="primary"):
         reset_game()
