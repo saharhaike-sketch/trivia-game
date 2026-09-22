@@ -372,7 +372,6 @@ elif st.session_state.game_state == "playing":
                     if st.button(f"{letters[i]}. {option}", key=f"opt_{i}", use_container_width=True):
                         st.session_state.is_correct = (i == correct_answer_idx)
                         
-                        # עצירת שעון אם ענה טעות או שזו השאלה האחרונה
                         if not st.session_state.is_correct or q_idx == 14:
                             st.session_state.end_time = time.time()
                             
@@ -405,7 +404,6 @@ elif st.session_state.game_state in ["won", "lost"]:
         final_prize = 32000 if q_idx >= 10 else 1000 if q_idx >= 5 else 0
         st.error(f"הפסדת את המשחק, אך סיימת עם סכום זכייה של: **{final_prize:,} ₪**")
     
-    # חישוב והצגת הזמן הכולל
     if st.session_state.start_time and st.session_state.end_time:
         total_sec = int(st.session_state.end_time - st.session_state.start_time)
         mins = total_sec // 60
@@ -421,8 +419,9 @@ elif st.session_state.game_state in ["won", "lost"]:
     
     for idx, item in enumerate(st.session_state.history):
         icon = "✅" if item['is_correct'] else "❌"
-        with st.expander(f"שאלה {idx + 1}: {item['question']} {icon}"):
+        with st.expander(f"שאלה {idx + 1} {icon}"):
+            st.markdown(f"**מה הייתה השאלה?** {item['question']}")
             if not item['is_correct']:
-                st.markdown(f"**התשובה שלך הייתה:** {item['user_ans']}")
-            st.markdown(f"**התשובה הנכונה:** {item['correct_ans']}")
-            st.info(f"**הסבר:** {item['explanation']}")
+                st.markdown(f"**התשובה שסימנת בטעות:** {item['user_ans']}")
+            st.markdown(f"**מה התשובה הנכונה?** {item['correct_ans']}")
+            st.info(f"**ולמה זו התשובה בעצם?** {item['explanation']}")
