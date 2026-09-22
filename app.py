@@ -334,7 +334,8 @@ elif st.session_state.game_state == "playing":
         with col_l2:
             if st.session_state.lifelines["audience"]:
                 if st.button("👥 עזרת קהל", use_container_width=True):
-                    letters = ["א'", "ב'", "ג'", "ד'"]
+                    # במקום אותיות עם גרש, ניתן אותיות ללא גרש בהתאם לבקשתך אם זה רלוונטי גם לקהל
+                    letters = ["א", "ב", "ג", "ד"]
                     st.session_state.hint_message = f"רוב מוחץ בקהל (74%) מהמר על אפשרות {letters[correct_answer_idx]}."
                     st.session_state.lifelines["audience"] = False
                     st.rerun()
@@ -360,30 +361,84 @@ elif st.session_state.game_state == "playing":
         st.subheader(f"{current_q['question']}")
         st.markdown("<br>", unsafe_allow_html=True)
 
-        col1, col2 = st.columns(2)
-        letters = ["א'", "ב'", "ג'", "ד'"]
+        # סידור כפתורי התשובות לשתי שורות, שתי עמודות
+        letters = ["א. ", "ב. ", "ג. ", "ד. "]
+        
+        # שורה ראשונה (א' ו-ב')
+        row1_col1, row1_col2 = st.columns(2)
+        with row1_col1: # בגלל RTL זו העמודה הימנית (א')
+            if 0 in st.session_state.hidden_options:
+                st.button(f"{letters[0]} (הוסתר)", disabled=True, key=f"opt_0", use_container_width=True)
+            else:
+                if st.button(f"{letters[0]} {options_list[0]}", key=f"opt_0", use_container_width=True):
+                    st.session_state.is_correct = (0 == correct_answer_idx)
+                    if not st.session_state.is_correct or q_idx == 14:
+                        st.session_state.end_time = time.time()
+                    st.session_state.history.append({
+                        "question": current_q['question'],
+                        "user_ans": options_list[0],
+                        "correct_ans": options_list[correct_answer_idx],
+                        "explanation": current_q['explanation'],
+                        "is_correct": st.session_state.is_correct
+                    })
+                    st.session_state.show_explanation = True
+                    st.rerun()
+                    
+        with row1_col2: # העמודה השמאלית (ב')
+            if 1 in st.session_state.hidden_options:
+                st.button(f"{letters[1]} (הוסתר)", disabled=True, key=f"opt_1", use_container_width=True)
+            else:
+                if st.button(f"{letters[1]} {options_list[1]}", key=f"opt_1", use_container_width=True):
+                    st.session_state.is_correct = (1 == correct_answer_idx)
+                    if not st.session_state.is_correct or q_idx == 14:
+                        st.session_state.end_time = time.time()
+                    st.session_state.history.append({
+                        "question": current_q['question'],
+                        "user_ans": options_list[1],
+                        "correct_ans": options_list[correct_answer_idx],
+                        "explanation": current_q['explanation'],
+                        "is_correct": st.session_state.is_correct
+                    })
+                    st.session_state.show_explanation = True
+                    st.rerun()
 
-        for i, option in enumerate(options_list):
-            target_col = col1 if i % 2 == 0 else col2
-            with target_col:
-                if i in st.session_state.hidden_options:
-                    st.button(f"{letters[i]}. (הוסתר)", disabled=True, key=f"opt_{i}", use_container_width=True)
-                else:
-                    if st.button(f"{letters[i]}. {option}", key=f"opt_{i}", use_container_width=True):
-                        st.session_state.is_correct = (i == correct_answer_idx)
-                        
-                        if not st.session_state.is_correct or q_idx == 14:
-                            st.session_state.end_time = time.time()
-                            
-                        st.session_state.history.append({
-                            "question": current_q['question'],
-                            "user_ans": option,
-                            "correct_ans": options_list[correct_answer_idx],
-                            "explanation": current_q['explanation'],
-                            "is_correct": st.session_state.is_correct
-                        })
-                        st.session_state.show_explanation = True
-                        st.rerun()
+        # שורה שנייה (ג' ו-ד')
+        row2_col1, row2_col2 = st.columns(2)
+        with row2_col1: # העמודה הימנית (ג')
+            if 2 in st.session_state.hidden_options:
+                st.button(f"{letters[2]} (הוסתר)", disabled=True, key=f"opt_2", use_container_width=True)
+            else:
+                if st.button(f"{letters[2]} {options_list[2]}", key=f"opt_2", use_container_width=True):
+                    st.session_state.is_correct = (2 == correct_answer_idx)
+                    if not st.session_state.is_correct or q_idx == 14:
+                        st.session_state.end_time = time.time()
+                    st.session_state.history.append({
+                        "question": current_q['question'],
+                        "user_ans": options_list[2],
+                        "correct_ans": options_list[correct_answer_idx],
+                        "explanation": current_q['explanation'],
+                        "is_correct": st.session_state.is_correct
+                    })
+                    st.session_state.show_explanation = True
+                    st.rerun()
+                    
+        with row2_col2: # העמודה השמאלית (ד')
+            if 3 in st.session_state.hidden_options:
+                st.button(f"{letters[3]} (הוסתר)", disabled=True, key=f"opt_3", use_container_width=True)
+            else:
+                if st.button(f"{letters[3]} {options_list[3]}", key=f"opt_3", use_container_width=True):
+                    st.session_state.is_correct = (3 == correct_answer_idx)
+                    if not st.session_state.is_correct or q_idx == 14:
+                        st.session_state.end_time = time.time()
+                    st.session_state.history.append({
+                        "question": current_q['question'],
+                        "user_ans": options_list[3],
+                        "correct_ans": options_list[correct_answer_idx],
+                        "explanation": current_q['explanation'],
+                        "is_correct": st.session_state.is_correct
+                    })
+                    st.session_state.show_explanation = True
+                    st.rerun()
 
     with st.sidebar:
         st.subheader("🏆 סולם הזכיות")
